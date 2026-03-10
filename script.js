@@ -11,28 +11,56 @@ function formatRupiah(num) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 }
 
+// Tambahkan variabel selector untuk input RTP baru
+const rtpInput = document.getElementById('rtp-input');
+
 function updateSimulation() {
-    const s0 = parseFloat(s0Input.value);
-    const v = parseFloat(vInput.value);
-    const g = parseFloat(gInput.value);
+    const s0 = parseFloat(s0Input.value) || 0;
+    const v = parseFloat(vInput.value) || 0;
+    const g = parseFloat(gInput.value) || 0;
     
-    // Update Label V
+    // Ambil nilai RTP dari input bebas, lalu ubah ke desimal (misal 96 -> 0.96)
+    let rtpValue = parseFloat(rtpInput.value) || 0;
+    let rtpDecimal = rtpValue / 100;
+
+    // Update Label Turnover (V)
     document.getElementById('v-val').innerText = formatRupiah(v);
     
-    // Update Label G
-    const labels = ["Safe", "Rational", "Mild Tilt", "Aggressive", "Moderate Chase", "Panic", "Ruinous"];
+    // Update Deskripsi G (Sama seperti sebelumnya)
+    const labels = ["Disiplin (Bot)", "Rasional", "Mulai Panas", "Agresif", "Emosional (Tilt)", "Panic Chasing", "Total Ruin"];
     document.getElementById('g-desc').innerText = labels[Math.floor(g * (labels.length - 1))];
 
-    // Rumus Utama
-    const st = s0 + (v * (currentRTP - 1)) * (1 + g);
+    // RUMUS UTAMA: St = S0 + [V * (RTP - 1)] * (1 + G)
+    const st = s0 + (v * (rtpDecimal - 1)) * (1 + g);
     const finalSt = Math.max(0, st);
 
-    // Update UI
+    // Update Tampilan Angka Saldo Akhir
     finalBalanceText.innerText = formatRupiah(finalSt);
+    
+    // Hitung Selisih (Loss)
     const loss = s0 - finalSt;
-    lossImpactText.innerText = `Loss: -${formatRupiah(loss)}`;
+    lossImpactText.innerText = `Estimasi Penurunan: -${formatRupiah(loss)}`;
 
-    updateChart(s0, v, g);
+    // Update Grafik dengan RTP baru
+    updateChart(s0, v, g, rtpDecimal);
+}
+
+// Tambahkan event listener agar saat angka RTP diketik, grafik langsung berubah
+rtpInput.addEventListener('input', updateSimulation);
+
+// Update fungsi updateChart agar menerima rtpDecimal sebagai parameter
+function updateChart(s0, v, g, rtpDecimal) {
+    const dataPoints = [];
+    const labels = [];
+    for (let i = 0; i <= 5; i++) {
+        const partialV = (v / 5) * i;
+        const res = s0 + (partialV * (rtpDecimal - 1)) * (1 + g);
+        dataPoints.push(Math.max(0, res));
+        labels.push((partialV / 1000000).toFixed(1) + "M");
+    }
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = dataPoints;
+    chart.update();
 }
 
 function setRTP(val) {
