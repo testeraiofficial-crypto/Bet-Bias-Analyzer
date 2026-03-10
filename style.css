@@ -1,0 +1,20 @@
+/* Custom slider styling */
+input[type=range] {
+    height: 8px;
+    border-radius: 5px;
+    background: #334155;
+}
+
+/* Memastikan chart tidak pecah di HP */
+canvas {
+    max-height: 250px !important;
+}
+
+/* Animasi sederhana saat angka berubah */
+#final-balance {
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 640px) {
+    .text-4xl { font-size: 1.75rem; }
+}
